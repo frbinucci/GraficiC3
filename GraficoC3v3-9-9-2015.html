@@ -1,0 +1,204 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>GraficoProva</title>
+		<style type="text/css">
+			h1{
+				text-align:center;
+				font-family:"Comic Sans MS";
+			}
+			#chart{
+				width:99%;
+				min-height: 500px;
+				text-align:center;
+			}
+			#ChangeType{
+				text-align:center;
+				visibility: hidden;
+				height:10%;
+			}
+			h2{
+				text-align:center;
+				font-family:"Comic Sans MS";
+			}
+			#tabella{
+				margin:10px;
+			}
+			
+			
+		</style>
+		<!-- Importazione del file contente il codice css della libreria C3.js -->
+		<link href="librerie/c3/c3.css" rel="stylesheet" type="text/css">
+		<!-- Importazione del codice Javascript delle librerie C3.js e D3.js -->
+		<script src="librerie/d3/d3.min.js" charset="utf-8"></script>
+		<script src="librerie/c3/c3.min.js"></script>
+		<!-- Importazione del codice Javascript della libreria "JQuery", utilizzata per le chiamate Ajax e per altre funzioni -->
+		<script src="librerie/jquery.js"></script>
+	</head>
+	<body>
+		<!-- Div contenente il grafio -->
+		<div id="chart">
+			<script type="text/javascript">
+			//Variabile "chart", contenente il l'oggetto grafico generato con il metodo "generate" della libreria "C3.js".
+			var chart;
+			//Variabile "viewData", contentente il dato che l'utente vorrà visualizzare quando cambierà il tipo di grafico.
+			var viewData;
+			////Chiamata Ajax////
+			//La chiamata avviene non appena tutti gli elementi della pagina sono stati caricati.
+			$(document).ready(function(){
+				//La chiamata avviene richiamando il metodo "ajax()" della libreria Jquery.
+				$.ajax({
+				  //Tipo di chiamata effettuata ("GET").
+				  type: "GET",
+				  //Url della risorsa .php che generà i dati che saranno visualizzati sul grafico.
+				  url: 'TestCsv.php',
+				  //Nel caso in cui la chiamata Ajax abbia dato un esito positivo si passerà alla generazione del grafico.
+				  success: function(){
+					////GENERAZIONE DEL GRAFICO.////
+					/*All'interno della variabile "chart" sarà contenuto l'oggetto grafico generato con il metodo "generate" della libreriaù
+					"C3.js"*/
+					chart = c3.generate({
+					//Il grafico viene generato sulla div con id "chart", presente nel body della pagina.
+					bindto: '#chart',
+					////Gestione della tipologia di dati presenti nel grafico.
+					data: {
+						//Sull'asse delle Ascisse compariranno i dati con intestazione "date" generati dal file php
+						x: 'date',
+						//Formato data presente all'interno del file dati.
+						xFormat : '%Y-%m-%d %H:%M:%S',
+						//Indirizzo della risorsa che genererà i dati che saranno visualizzati sul grafico.
+						url: 'TestCsv.php',
+						//La tipologia di grafico predefinita è a barre.
+						type: 'bar' ,
+					},
+					//Gestione dello zoom sul grafico.
+					zoom:{
+						enabled: false,
+					},
+					//Gestione del sottografico realtivo al grafico visualizzato.
+					//Il sottografico consente di visualizzare i dati di una data selezione con un maggior dettaglio.
+					subchart:{
+						//Il sottografico è visibile.
+						show: true,
+						/*Il metodo seguente verrà attivato ogni volta che si genererà l'evento "brush", cioè ogni volta che l'utente
+						modificherà la visuale del sottografico.*/
+						onbrush: function (domain) { 
+							////GENERAZIONE DELLA TABELLA CONTENENTE I DATI SELEZIONATI TRAMITE IL SOTTOGRAFICO.////
+							/*Il metodo "chart.internal.filterByXDomain(chart.data(),domain)" restituisce un array di oggetti aventi
+							tanti elementi quante sono le variabili rappresentate nel grafico. Tale metodo restituisce quali sono i dati
+							selezionati tramite il sottografico. L'array di oggetti viene quindi salvato all'interno della variabile
+							"selezione".*/
+							selezione = chart.internal.filterByXDomain(chart.data(),domain);
+							//La variabile "table" conterrà il codice html della tabella contenente la selezione del sottografico.
+							var table = '<table border=1 align="center"><tr>'
+							//Generazione dell'intestazione della tabella.
+							table+='<th>Data</th>'
+							for(i=0;i<selezione.length;i++)
+							{
+								table+='<th>' + selezione[i].id + '</th>'
+							}
+							table+='</tr>'
+							//Popolamento della tabella.
+							for(i=0;i<selezione[0].values.length;i++)
+							{
+								table+='<tr>'
+								j=0;
+								table+='<td>' + selezione[j].values[i].x.toString().substring(4,24) + '</td>'
+								while(j<selezione.length)
+								{
+									table+='<td>' + selezione[j].values[i].value + '</td>'
+									j++;
+								}
+								table+='</tr>'	
+							}
+							//Inserimento del tag di chiusura della tabella.
+							table += '</table>';
+							//La tabella generata viene inserita nella div con id "tabella".
+							document.getElementById("tabella").innerHTML = table;
+						},
+					},
+					////Gestione della visualizzazione delle assi del grafico.////
+					axis : {
+						//Gestione dei dati visualizzazione dell'asse delle ascisse (x).
+						x : {
+							//I valori sono di tipo temporale (date)".
+							type : 'timeseries',
+							tick: {
+								//Formato data che comparirà sull'asse delle ascisse.
+								format: '%Y-%m-%d %H:%M:%S',
+								//Il selezioneo dell'asse è ruotato di 90°.
+								rotate: 90,
+								culling:{
+									//Massimo intervallo tra un valore ed un altro sull'asse delle ascisse (10).
+										max: 1,
+									},
+								}
+									
+							}
+						}
+					});
+					/*Al termine della generazione del grafico, verrà visualizzata la div contenente i comandi necessari alla modifica
+					della tipologia di grafico.*/
+					document.getElementById('ChangeType').style.visibility = "visible";
+				},
+				//Serie di operazioni previste nel caso in cui la chiamata Ajax non abbia avuto buon fine.
+				error: function(){
+					//Se la chiamata Ajax non ha avuto esito positivo, verrà stampato un messaggio di errore.
+					alert("Si e' verificato un errore con la chiamata Ajax, impossibile generare il grafico!");
+				},
+			//Fine della parte relativa alla chiamata Ajax
+			});
+		/*Funzioni JQuery utilizzate per la modifica della tipologia del grafico. Le funzioni operano tutte in modo analogo. Ricevono
+		in input un valore tramite finestra di dialogo, tale valore viene salvato sulla variabile "viewData" 
+		(contente il dato di cui si vuol cambiare la visualizzazione) la quale, se non è nulla,
+		verrà passata come parametro al metodo "chart.transform".*/
+		//Cambiamento del grafico in un grafico a lina.
+		$("#ChartLine").click(function(){
+			viewData=prompt("Di quale dato si vuol cambiare la visualizzazione? (nulla per tutti): ");
+			if(viewData!=null)
+			{
+				chart.transform('line',viewData);
+			}
+	
+		});
+		//Cambiamento del grafico in un istrogramma.
+		$("#ChartBar").click(function(){
+		
+			viewData=prompt("Di quale dato si vuol cambiare la visualizzazione? (nulla per tutti): ");
+			if(viewData!=null)
+			{
+				chart.transform('bar',viewData);
+			}
+		
+			
+		});
+		//Cambiamento del grafico in un grafico a "spline."
+		$("#ChartSpline").click(function(){
+		
+			viewData=prompt("Di quale dato si vuol cambiare la visualizzazione? (nulla per tutti): ");
+			if(viewData!=null)
+			{
+				chart.transform('spline',viewData);
+			}
+		});
+		//Cambiamento del grafico in un grafico ad "area".
+		$("#ChartArea").click(function(){
+			viewData=prompt("Di quale dato si vuol cambiare la visualizzazione? (nulla per tutti): ");
+			if(viewData!=null)
+			{
+				chart.transform('area',viewData);
+			}
+		});
+	});//Fine delle operazioni da compiere una volta avvenuto il caricamento della pagina.	
+	</script>
+		</div>
+		<div id="ChangeType">
+			<h2>Cambiare tipo di grafico</h2>
+			<input id="ChartLine" type="button" value="Grafico a linea" />
+			<input id="ChartBar" type="button" value="Istogramma" />
+			<input id="ChartSpline" type="button" value="Grafico spline" />
+			<input id="ChartArea" type="button" value="Grafico area" />
+		</div>
+		<div id="tabella"></div>
+	</body>
+</html>
