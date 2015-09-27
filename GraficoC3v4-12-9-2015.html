@@ -1,356 +1,293 @@
 <!DOCTYPE HTML>
 <html>
-	<head>
-		<title>GraficoProva</title>
-		<style type="text/css">
-			h1{
-				text-align:center;
-				font-family:"Comic Sans MS";
-			}
-			#chart{
-				width:99%;
-				min-height: 500px;
-				text-align:center;
-			}
-			#ChangeType{
-				text-align:center;
-				visibility: hidden;
-				
-			}
-			h2{
-				text-align:center;
-				font-family:"Comic Sans MS";
-			}
-			#DataTable{
-				visibility:hidden;
-			}
-			
-		</style>
-		<!-- Importazione del file contente il codice css della libreria C3.js -->
-		<link href="librerie/c3/c3.css" rel="stylesheet" type="text/css">
-		<!-- Importazione del codice Javascript delle librerie C3.js e D3.js -->
-		<script src="librerie/d3/d3.min.js" charset="utf-8"></script>
-		<script src="librerie/c3/c3.min.js"></script>
-		<!-- Importazione del codice Javascript della libreria "JQuery", utilizzata per le chiamate Ajax e per altre funzioni -->
-		<script src="librerie/jquery.js"></script>
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
-		<script type="text/javascript">
-			//Variabile "chart", contenente il l'oggetto grafico generato con il metodo "generate" della libreria "C3.js".
-			var chart;
-			//Variabile "viewData", contentente il dato che l'utente vorrà visualizzare quando cambierà il tipo di grafico.
-			var viewData;
-			////Chiamata Ajax////
-			//La chiamata avviene non appena tutti gli elementi della pagina sono stati caricati.
-			$(document).ready(function(){
-				//La chiamata avviene richiamando il metodo "get" della libreria JQuery.
-				$.get( "http://localhost/grafici/GeneraDate.php", function() {
-					////GENERAZIONE DEL GRAFICO.////
-					//All'interno della variabile "chart" sarà contenuto l'oggetto grafico generato con il metodo "generate" della libreriaù
-					//"C3.js"
-					chart = c3.generate({
-					//Il grafico viene generato sulla div con id "chart", presente nel body della pagina.
-					bindto: '#chart',
-					////Gestione della tipologia di dati presenti nel grafico.
-					data: {
-						//Sull'asse delle Ascisse compariranno i dati con intestazione "date" generati dal file php
-						x: 'date',
-						//Formato data presente all'interno del file dati.
-						xFormat : '%Y-%m-%d %H:%M:%S',
-						//Indirizzo della risorsa che genererà i dati che saranno visualizzati sul grafico.
-						url: 'http://localhost/grafici/GeneraDate.php',
-						//La tipologia di grafico predefinita è a barre.
-						type: 'line' ,
+<head>
+    <title>GraficoProva</title>
+    <style type="text/css">
+        #chart {
+            min-height: 500px;
+        }
+        
+        #ChangeType {
+            visibility: hidden;
+        }
+        
+        h2 {
+            text-align: center;
+            font-family: "Comic Sans MS";
+        }
+        
+        #DataTable {
+            visibility: hidden;
+        }
+        
+        #export {
+            visibility: hidden;
+        }
+    </style>
+    <!-- Importazione del file contente il codice css della libreria C3.js -->
+    <link href="librerie/c3/c3.css" rel="stylesheet" type="text/css">
+    <!-- Importazione del codice Javascript delle librerie C3.js e D3.js -->
+    <script src="librerie/d3/d3.min.js" charset="utf-8"></script>
+    <script src="librerie/c3/c3.min.js"></script>
+    <!-- Importazione del codice Javascript della libreria "JQuery", utilizzata per le chiamate Ajax e per altre funzioni -->
+    <script src="librerie/jquery.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="librerie/font/font-awesome.min.css">
+    <script type="text/javascript">
+        var chart;
+		var test=false;
+        var viewData;
+        var link = "Data/GeneraDate.php";
+        function generaGrafico(link) {
+            chart = c3.generate({
+                //The chart is append into the div with id "chart".
+                bindto: '#chart',
+                ////Information about the data of the chart.
+                data: {
+                    //Xaxis data name.
+                    x: 'date',
+                    //Date format.
+                    xFormat: '%Y-%m-%d %H:%M:%S',
+                    //Url of the php file that generate the data of the chart.
+                    url: link,
+                    //Definition of the type of chart.
+                    type: 'line',
+                },
+                //The chart can be zoomable.
+                zoom: {
+                    enabled: true,
+                },
+                //Information about the subchart.
+                subchart: {
+                    //The subchart is visible.
+                    show: true,
+                    //This method is associated at the event "brush".
+                    onbrush: function(domain) {
+                        //Creation of the table with the selected data of the chart.
+                        document.getElementById('export').style.visibility = "visible";
+                        selezione = chart.internal.filterByXDomain(chart.data(), domain);
+                        //The "table" variabile contain the code of the html table.
+                        var table = '<table class="table table-bordered" id="table"><tr>'
+                            ////Creation of the header.////
+                        table += '<th>Data</th>'
+                        for (i = 0; i < selezione.length; i++) {
+                            //The values of the header will be get from the attribute "id" of each element of the array "selezione".
+                            table += '<th>' + selezione[i].id + '</th>'
+                        }
+                        table += '</tr>'
+                            ////Population of the table.////
+                        for (i = 0; i < selezione[0].values.length; i++) {
+                            table += '<tr>'
+                            j = 0;
+                            //Formatting of the dates in the table.
+                            table += '<td>' + selezione[j].values[i].x.toString().substring(4, 24) + '</td>'
+                            while (j < selezione.length) {
+                                table += '<td>' + selezione[j].values[i].value + '</td>'
+                                j++;
+                            }
+                            table += '</tr>'
+                        }
+                        //Closing table.
+                        table += '</table>';
+                        //The table will be append in the div with id "table".
+                        document.getElementById("tabella").innerHTML = table;
+                    },
+                },
+                //Pattern of color of the data represented on the chart.
+                color: {
+                    pattern: ['#FF0000', '#1f77b4', '#ffbb78', '#2ca02c', '#98df8a', '#d62728', '#ff9896', '#9467bd',
+                        '#c5b0d5', '#8c564b', '#ff7f0e', '#e377c2', '#c49c94', '#7f7f7f', '#c7c7c7', '#bcbd22', '#f7b6d2', '#17becf',
+                        '#9edae5', '#dbdb8d'
+                    ]
+                },
+                ////Formatting of the axis values.////
+                axis: {
+                    //Formatting of the xaxis values.
+                    x: {
+                        //The type of the values on xAxis is "timeseries".
+                        type: 'timeseries',
+						label: 'Tempo',
+                        tick: {
+                            //Date format.
+                            format: '%Y-%m-%d %H:%M:%S',
+                            //The labels on the xaxis are rotated of 90°.
+                            rotate: 90,
+                            culling: {
+                                //Max interval beetwen the values of the xAxis.
+                                max: 10,
+                            },
+                        }
 					},
-					//Gestione dello zoom sul grafico.
-					zoom:{
-						enabled: false,
+					y: {
+						label: 'Piovuta (ml)',
 					},
-					//Gestione del sottografico realtivo al grafico visualizzato.
-					//Il sottografico consente di visualizzare i dati di una data selezione con un maggior dettaglio.
-					subchart:{
-						//Il sottografico è visibile.
-						show: true,
-						//Il metodo seguente verrà attivato ogni volta che si genererà l'evento "brush", cioè ogni volta che l'utente
-						//modificherà la visuale del sottografico.
-						onbrush: function (domain) { 
-							////GENERAZIONE DELLA TABELLA CONTENENTE I DATI SELEZIONATI TRAMITE IL SOTTOGRAFICO.////
-							//Il metodo "chart.internal.filterByXDomain(chart.data(),domain)" restituisce un array di oggetti aventi
-							//tanti elementi quante sono le variabili rappresentate nel grafico. Tale metodo restituisce quali sono i dati
-							//selezionati tramite il sottografico. L'array di oggetti viene quindi salvato all'interno della variabile
-							//"selezione".
-							selezione = chart.internal.filterByXDomain(chart.data(),domain);
-							//La variabile "table" conterrà il codice html della tabella contenente la selezione del sottografico.
-							var table = '<table class="table table-bordered"><tr>'
-							////Generazione dell'intestazione della tabella.////
-							/*Nella prima casella dell'intestazione è presente la parola "data", poichè i dati rappresentati nella tabella
-							sono serie temporali.*/
-							table+='<th>Numero</th>'
-							//Generazione dei restanti campi dell'intestazione della tabella
-							for(i=0;i<selezione.length;i++)
-							{
-								//I campi vengono prelevati dall'attributo "id" dei vari elementi dell'oggetto "selezione".
-								table+='<th>' + selezione[i].id + '</th>'
-							}
-							table+='</tr>'
-							////Popolamento della tabella.////
-							//Il popolamento della tabella avviene caricando per riga.
-							for(i=0;i<selezione[0].values.length;i++)
-							{
-								//Aggiunta di una nuova riga alla tabella.
-								table+='<tr>'
-								j=0;
-								//Aggiunta dei dati relativi al tempo nella prima colonna della tabella.
-								table+='<td>' + selezione[j].values[i].x.toString().substring(4,24) + '</td>'
-								while(j<selezione.length)
-								{
-									//Aggiunta dei valori relativi ad ogni singolo data rappresentato.
-									table+='<td>' + selezione[j].values[i].value + '</td>'
-									j++;
-								}
-								table+='</tr>'	
-							}
-							//Inserimento del tag di chiusura della tabella.
-							table += '</table>';
-							//La tabella generata viene inserita nella div con id "tabella".
-							document.getElementById("tabella").innerHTML = table;
-						},
-					},
-					color:{
-						pattern: ['#ff7f0e','#1f77b4' , '#ffbb78', '#2ca02c', '#98df8a', '#d62728', '#ff9896', '#9467bd', '#c5b0d5', '#8c564b', '#c49c94', '#e377c2', '#f7b6d2', '#7f7f7f', '#c7c7c7', '#bcbd22', '#dbdb8d', '#17becf', '#9edae5']
-					},
-					////Gestione della visualizzazione delle assi del grafico.////
-					axis : {
-						//Gestione dei dati visualizzazione dell'asse delle ascisse (x).
-						x : {
-							//I valori sono di tipo temporale (date)".
-							type : 'timeseries',
-							tick: {
-								//Formato data che comparirà sull'asse delle ascisse.
-								format: '%Y-%m-%d %H:%M:%S',
-								//Il selezioneo dell'asse è ruotato di 90°.
-								rotate: 90,
-								culling:{
-									//Massimo intervallo tra un valore ed un altro sull'asse delle ascisse (10).
-										max: 1,
-									},
-								}
-									
-							}
-						}
-					});
-					document.getElementById('ChangeType').style.visibility = "visible";
-					document.getElementById('DataTable').style.visibility = "visible";
-				
-					})
-					  .fail(function() {
-						alert( "Si e' verificato un errore con la chiamata Ajax, impossibile generare il grafico!" );
-					})
-			/*
-				//La chiamata avviene richiamando il metodo "ajax()" della libreria Jquery.
-				$.ajax({
-				  //Tipo di chiamata effettuata ("GET").
-				  type: "GET",
-				  //Url della risorsa .php che generà i dati che saranno visualizzati sul grafico.
-				  url: 'TestCsv.php',
-				  //Nel caso in cui la chiamata Ajax abbia dato un esito positivo si passerà alla generazione del grafico.
-				  success: function(){
-					////GENERAZIONE DEL GRAFICO.////
-					//All'interno della variabile "chart" sarà contenuto l'oggetto grafico generato con il metodo "generate" della libreriaù
-					//"C3.js"
-					chart = c3.generate({
-					//Il grafico viene generato sulla div con id "chart", presente nel body della pagina.
-					bindto: '#chart',
-					////Gestione della tipologia di dati presenti nel grafico.
-					data: {
-						//Sull'asse delle Ascisse compariranno i dati con intestazione "date" generati dal file php
-						x: 'date',
-						//Formato data presente all'interno del file dati.
-						xFormat : '%Y-%m-%d %H:%M:%S',
-						//Indirizzo della risorsa che genererà i dati che saranno visualizzati sul grafico.
-						url: 'TestCsv.php',
-						//La tipologia di grafico predefinita è a barre.
-						type: 'bar' ,
-					},
-					//Gestione dello zoom sul grafico.
-					zoom:{
-						enabled: false,
-					},
-					//Gestione del sottografico realtivo al grafico visualizzato.
-					//Il sottografico consente di visualizzare i dati di una data selezione con un maggior dettaglio.
-					subchart:{
-						//Il sottografico è visibile.
-						show: true,
-						//Il metodo seguente verrà attivato ogni volta che si genererà l'evento "brush", cioè ogni volta che l'utente
-						//modificherà la visuale del sottografico.
-						onbrush: function (domain) { 
-							////GENERAZIONE DELLA TABELLA CONTENENTE I DATI SELEZIONATI TRAMITE IL SOTTOGRAFICO.////
-							//Il metodo "chart.internal.filterByXDomain(chart.data(),domain)" restituisce un array di oggetti aventi
-							//tanti elementi quante sono le variabili rappresentate nel grafico. Tale metodo restituisce quali sono i dati
-							//selezionati tramite il sottografico. L'array di oggetti viene quindi salvato all'interno della variabile
-							//"selezione".
-							//selezione = chart.internal.filterByXDomain(chart.data(),domain);
-							//La variabile "table" conterrà il codice html della tabella contenente la selezione del sottografico.
-							var table = '<table border=1 align="center"><tr>'
-							//Generazione dell'intestazione della tabella.
-							table+='<th>Data</th>'
-							for(i=0;i<selezione.length;i++)
-							{
-								table+='<th>' + selezione[i].id + '</th>'
-							}
-							table+='</tr>'
-							//Popolamento della tabella.
-							for(i=0;i<selezione[0].values.length;i++)
-							{
-								table+='<tr>'
-								j=0;
-								table+='<td>' + selezione[j].values[i].x.toString().substring(4,24) + '</td>'
-								while(j<selezione.length)
-								{
-									table+='<td>' + selezione[j].values[i].value + '</td>'
-									j++;
-								}
-								table+='</tr>'	
-							}
-							//Inserimento del tag di chiusura della tabella.
-							table += '</table>';
-							//La tabella generata viene inserita nella div con id "tabella".
-							document.getElementById("tabella").innerHTML = table;
-						},
-					},
-					////Gestione della visualizzazione delle assi del grafico.////
-					axis : {
-						//Gestione dei dati visualizzazione dell'asse delle ascisse (x).
-						x : {
-							//I valori sono di tipo temporale (date)".
-							type : 'timeseries',
-							tick: {
-								//Formato data che comparirà sull'asse delle ascisse.
-								format: '%Y-%m-%d %H:%M:%S',
-								//Il selezioneo dell'asse è ruotato di 90°.
-								rotate: 90,
-								culling:{
-									//Massimo intervallo tra un valore ed un altro sull'asse delle ascisse (10).
-										max: 1,
-									},
-								}
-									
-							}
-						}
-					});
-					//Al termine della generazione del grafico, verrà visualizzata la div contenente i comandi necessari alla modifica
-					//della tipologia di grafico.
-					document.getElementById('ChangeType').style.visibility = "visible";
+                },
+				point:{
+					show: false,
 				},
-				//Serie di operazioni previste nel caso in cui la chiamata Ajax non abbia avuto buon fine.
+				onrendered:function(){
+					if(!test)
+					{
+						chart.transform('bar');
+						test=true;
+					}
+				}
+            });
+			
+            //The div "ChangeType" and "DataTable" will be visible if there aren't problem with the creation of the chart.
+            document.getElementById('ChangeType').style.visibility = "visible";
+            document.getElementById('DataTable').style.visibility = "visible";
+        }
+        ////Ajax call////
+        //There are some methods to do Ajax calls in the JQuery Library, in this case we use the method "$.get()".
+		
+        $(document).ready(function() {
+		/*
+            $.get(link, function() {
+                    ////Creation of the chart with the method "generaGrafico()".////
+                    generaGrafico(link);
+                })
+                .fail(function() {
+                    //If there are some problems with the Ajax call a message error will be generated.
+                    alert("Si e' verificato un errore con la chiamata Ajax, impossibile generare il grafico!");
+                })
+		*/
+                /*We can do an Ajax call also with the method "$.ajax()" of the c3.js library, comment the "$.get()" method and uncomment
+                the code below to try it.*/
+				$.ajax({
+				  //Type of Ajax call (GET).
+				  type: "GET",
+				  //URL of the php resource, that generate the data of the chart.
+				  url: link,
+				  timeout:5000,
+				  //In case of success, the chart will be generated.
+				  success: function(){
+						generaGrafico(link);
+				},
 				error: function(){
-					//Se la chiamata Ajax non ha avuto esito positivo, verrà stampato un messaggio di errore.
+					//If there are some problems with the Ajax call a message error will be generated.
 					alert("Si e' verificato un errore con la chiamata Ajax, impossibile generare il grafico!");
 				},
-			//Fine della parte relativa alla chiamata Ajax
+			//End of the Ajax call.
 			});
-			*/
 		
-		/*Funzioni JQuery utilizzate per la modifica della tipologia del grafico. Le funzioni operano tutte in modo analogo. Ricevono
-		in input un valore tramite finestra di dialogo, tale valore viene salvato sulla variabile "viewData" 
-		(contente il dato di cui si vuol cambiare la visualizzazione) la quale, se non è nulla,
-		verrà passata come parametro al metodo "chart.transform".*/
-		//Cambiamento del grafico in un grafico a lina.
-		$("#ChartLine").click(function(){
-			viewData=prompt("Di quale dato si vuol cambiare la visualizzazione? (nulla per tutti): ");
-			if(viewData!=null)
-			{
-				chart.transform('line',viewData);
-			}
-	
-		});
-		//Cambiamento del grafico in un istrogramma.
-		$("#ChartBar").click(function(){
-		
-			viewData=prompt("Di quale dato si vuol cambiare la visualizzazione? (nulla per tutti): ");
-			if(viewData!=null)
-			{
-				chart.transform('bar',viewData);
-			}
-		
-			
-		});
-		//Cambiamento del grafico in un grafico a "spline."
-		$("#ChartSpline").click(function(){
-		
-			viewData=prompt("Di quale dato si vuol cambiare la visualizzazione? (nulla per tutti): ");
-			if(viewData!=null)
-			{
-				chart.transform('spline',viewData);
-			}
-		});
-		//Cambiamento del grafico in un grafico ad "area".
-		$("#ChartArea").click(function(){
-			viewData=prompt("Di quale dato si vuol cambiare la visualizzazione? (nulla per tutti): ");
-			if(viewData!=null)
-			{
-				chart.transform('area',viewData);
-			}
-		});
-		$("#ScatterPlot").click(function(){
-			viewData=prompt("Di quale dato si vuol cambiare la visualizzazione? (nulla per tutti): ");
-			if(viewData!=null)
-			{
-				chart.transform('scatter',viewData);
-			}
-		
-		});
-		
-	});//Fine delle operazioni da compiere una volta avvenuto il caricamento della pagina.	
-	
-	</script>
+                //JQuery functions to change the type of chart.
+                //Change the chart in a line chart.
+            $("#ChartLine").click(function() {
+                viewData = prompt("Di quale dato si vuol cambiare la visualizzazione? (nulla per tutti): ");
+                if (viewData != null) {
+                    chart.transform('line', viewData);
+                }
+            });
+            //Change the chart in a bar chart.
+            $("#ChartBar").click(function() {
 
-	</head>
-	<body>
-		<!-- Div contenente il grafio -->
-		<div id="chart">
-				
-		</div>
-		<div class="col-xs-1"></div>
-		
-		<div class="col-xs-4" id="ChangeType" >
-			<div class="row">
-			<h2>TIPOLOGIE DI GRAFICO</h2>
-			</div>
-			<div class="row">
-				<button class="btn btn-primary btn-block" id="ChartLine">Grafico a linea </button>
-			</div>
-			<div class="row">
-				<button class="btn btn-primary btn-block" id="ChartBar">Grafico a Barre </button>
-			</div>
-			<div class="row">
-				<button class="btn btn-primary btn-block" id="ChartSpline">Grafico Spline </button>
-			</div>
-			<div class="row">
-				<button class="btn btn-primary btn-block" id="ChartArea"> Grafico Area </button>
-			</div>
-			<div class="row">
-				<button class="btn btn-primary btn-block" id="ScatterPlot">Scatter Plot  </button>
-			</div>
-		</div>
-		<div class="col-xs-2">
-		</div>
-		<div class="col-xs-4">
-		<div class="row" id="DataTable">
-			<h2>TABELLA SELEZIONE</h2>
-		</div>
-		<div class="row" id="tabella">
-		</div>
-		
-		
-		<!--
-			<table class="table table-stripped">
-			
-			</table>
-			-->
-		</div>
-		<div class="col-xs-1">
-		</div>
-		
-	</body>
+                viewData = prompt("Di quale dato si vuol cambiare la visualizzazione? (nulla per tutti): ");
+                if (viewData != null) {
+                    chart.transform('bar', viewData);
+                }
+            });
+            //Change the chart in a spline chart.
+            $("#ChartSpline").click(function() {
+
+                viewData = prompt("Di quale dato si vuol cambiare la visualizzazione? (nulla per tutti): ");
+                if (viewData != null) {
+                    chart.transform('spline', viewData);
+                }
+            });
+            //Change the chart in a area chart.
+            $("#ChartArea").click(function() {
+                viewData = prompt("Di quale dato si vuol cambiare la visualizzazione? (nulla per tutti): ");
+                if (viewData != null) {
+                    chart.transform('area', viewData);
+                }
+            });
+            //Change the chart in a scatterplot.
+            $("#ScatterPlot").click(function() {
+                viewData = prompt("Di quale dato si vuol cambiare la visualizzazione? (nulla per tutti): ");
+                if (viewData != null) {
+                    chart.transform('scatter', viewData);
+                }
+            });
+            //Operation to do if the user request to save che table as CSV.
+            $("#export").on('click', function(event) {
+                //Get table
+                var table = $("#table")[0];
+                console.log(table);
+                //Get number of rows/columns
+                var rowLength = table.rows.length;
+                console.log(rowLength)
+                var colLength = table.rows[0].cells.length;
+                //Declare string to fill with table data
+                var tableString = "";
+                //Get column headers
+                for (var i = 0; i < colLength; i++) {
+                    tableString += table.rows[0].cells[i].innerHTML.split(",").join("") + ",";
+                }
+                tableString = tableString.substring(0, tableString.length - 1);
+                tableString += "\r\n";
+                //Get row data
+                for (var j = 1; j < rowLength; j++) {
+                    for (var k = 0; k < colLength; k++) {
+                        tableString += table.rows[j].cells[k].innerHTML.split(",").join("") + ",";
+                    }
+                    tableString += "\r\n";
+                    console.log(tableString);
+                }
+                //Save file
+                if (navigator.appName == "Microsoft Internet Explorer") {
+                    tableString = 'sep=,\r\n' + tableString;
+                    myFrame.document.open("text/html", "replace");
+                    myFrame.document.write(tableString);
+                    myFrame.document.close();
+                    myFrame.focus();
+                    myFrame.document.execCommand('SaveAs', true, 'data.csv');
+                } else {
+                    csvData = 'data:application/csv;charset=utf-8,' + encodeURIComponent(tableString);
+                    $(event.target).attr({
+                        'href': csvData,
+                        'target': '_blank',
+                        'download': 'tabellaDati.csv'
+                    });
+                }
+            });
+        }); //End of the operation to do when the html document is ready.
+    </script>
+</head>
+<body>
+    <!-- Div contenente il grafio -->
+    <div id="chart">
+    </div>
+    <div class="col-sm-4 col-sm-offset-1" id="ChangeType">
+        <div class="row">
+            <h2>TIPOLOGIE DI GRAFICO</h2>
+        </div>
+        <div class="row">
+            <button class="btn btn-primary btn-block" id="ChartLine">Grafico a linea </button>
+        </div>
+        <div class="row">
+            <button class="btn btn-primary btn-block" id="ChartBar">Grafico a Barre </button>
+        </div>
+        <div class="row">
+            <button class="btn btn-primary btn-block" id="ChartSpline">Grafico Spline </button>
+        </div>
+        <div class="row">
+            <button class="btn btn-primary btn-block" id="ChartArea"> Grafico Area </button>
+        </div>
+        <div class="row">
+            <button class="btn btn-primary btn-block" id="ScatterPlot">Scatter Plot </button>
+        </div>
+    </div>
+    <div class="col-sm-5 col-sm-offset-2">
+        <div class="row" id="DataTable">
+            <h2>TABELLA SELEZIONE</h2>
+        </div>
+        <div class="row" id="tabella">
+        </div>
+        <div class="row">
+            <a href="#" class="btn btn-primary btn-block" id="export"><i class="fa fa-download"></i>   Esporta la tabella in CSV</a>
+        </div>
+</body>
 </html>
